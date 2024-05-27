@@ -3,7 +3,6 @@ from openpyxl import Workbook
 from tqdm import tqdm
 import PyPDF2
 import re
-# Instalación de librerias: $ pip install python-docx openpyxl tqdm PyPDF2
  
 def extract_titles(doc_path, headings):
     doc = Document(doc_path)
@@ -18,7 +17,6 @@ def extract_titles(doc_path, headings):
     is_sub2 = False
  
     for para in doc.paragraphs:
- 
         if para.style.name.startswith('Heading'):
             level = int(para.style.name.split(' ')[1])
             text = para.text.strip()
@@ -29,35 +27,31 @@ def extract_titles(doc_path, headings):
                 current_subdomain1 = None
                 current_subdomain2 = None
                 current_control = None
-                remediation = None
-                verification = None
-                impact = None
             elif level == 4 and not is_sub2:  # Subdominio 1
                 current_subdomain1 = text
                 current_subdomain2 = None
                 current_control = None
-                remediation = None
-                verification = None
-                impact = None
                 is_sub2 = True
             elif level == 4 and is_sub2:  # Subdominio 2
                 current_subdomain2 = text
                 current_control = None
-                remediation = None
-                verification = None
-                impact = None
             elif level == 3:  # Control
-                current_control = text
+                current_control = text.split(' (')[0] # Elimina todo lo que hay a la derecha de un ' (', para que no salga por ejemplo: 
                 # Extraer el número de control
                 for key, value in headings.items():
-                    value_words = value.split()[:6]
-                    control_words = str(current_control).split()[:6]
-                    if len(value_words) >= 6 and len(control_words) >= 6:
-                        if value_words == control_words:  
+                    value_words = value.replace(' ', '')
+                    control_words = current_control.replace(' ', '')
+                    if value_words == control_words:
+                        control_number = key
+                        break  # Salir del bucle una vez que se encuentra una coincidencia
+                    # Ajustar la longitud de control_words si es mayor que value_words (no funciona como se espera)
+                    elif len(control_words) > len(value_words):
+                        control_words = control_words.ljust(len(value_words))
+                        if control_words == value_words:
                             control_number = key
-                            break  # Salir del bucle una vez que se encuentra una coincidencia
-                        else:
-                            control_number = None
+                            break
+                    else:
+                        control_number = None
                 titles.append((domain, current_subdomain1, current_subdomain2, control_number, current_control, remediation, verification, impact))
  
     return titles
@@ -89,17 +83,21 @@ def extract_numbered_headings(pdf_path):
     with open(pdf_path, 'rb') as pdf_file:
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         for page in pdf_reader.pages:
-            text = page.extract_text()  # Extraemos el texto de la página
-            lines = text.split('\n')  # Dividimos el texto en líneas
+            text = page.extract_text()
+            lines = text.split('\n')
             for line in lines:
                 # Utilizamos una expresión regular para buscar cualquier cadena que comience con un número seguido de un punto
-                matches = re.findall(r'(\d+\..*)', line)
+                matches = re.findall(r'(\d+\.\d+(?:\.\d+)*)\s*\s*(.*)', line)
                 if matches:
                     for match in matches:
-                        # Dividimos la cadena coincidente en ID y texto
-                        parts = match.split(' ', 1)
-                        # Añadimos el ID y el texto limpio al diccionario
-                        headings[parts[0]] = parts[1].strip()
+                        # Eliminar espacios y caracteres después del punto en el valor
+                        clean_value = match[1].strip().replace(' -', '-').split(' (')[0].split(' .')[0]
+                        # Verificar si la clave ya existe en el diccionario antes de agregarla
+                        if match[0] in headings:
+                            break
+                        else:
+                            # Añadimos el ID y el texto limpio al diccionario
+                            headings[match[0]] = clean_value
     return headings
  
 def write_titles_to_excel(titles, remediation_texts, verification_texts, impact_texts, excel_path):
@@ -126,30 +124,46 @@ def write_titles_to_excel(titles, remediation_texts, verification_texts, impact_
     for i, extended_title in enumerate(tqdm(extended_titles, desc="Copiando datos a Excel", unit="fila")):
         ws.append(extended_title)
  
+    merge_consecutive_rows(ws)
     wb.save(excel_path)
+
+def merge_consecutive_rows(ws):
+    max_row = ws.max_row
+    for col in [1, 3]:
+        start_row = 2
+        while start_row <= max_row:
+            end_row = start_row
+            while end_row < max_row and ws.cell(row=end_row, column=col).value == ws.cell(row=end_row + 1, column=col).value and ws.cell(row=end_row + 1, column=col).value != None:
+                end_row += 1
+            if end_row > start_row:
+                ws.merge_cells(start_row=start_row, start_column=col, end_row=end_row, end_column=col)
+                cell = ws.cell(row=start_row, column=col)
+                cell.alignment = cell.alignment.copy(vertical='center')
+            start_row = end_row + 1
+
  
 def main():
-    word_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Hacking/Autobastion/Templates/CIS_Debian_Linux_10_Benchmark_v2.0.0.docx'
-    pdf_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Hacking/Autobastion/Templates/CIS_Debian_Linux_10_Benchmark_v2.0.0.pdf'
-    excel_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Hacking/Autobastion/output.xlsx'
+    word_path_en = r'.\Templates\CIS_Debian_Linux_11_STIG_Benchmark_v1.0.0.docx'
+    pdf_path = r'.\Templates\CIS_Debian_Linux_11_STIG_Benchmark_v1.0.0.pdf'
+    excel_path = r'.\output.xlsx'
  
     # Barra de progreso principal para todo el proceso
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:
         headings = extract_numbered_headings(pdf_path)
         pbar.update(20)
-        titles = extract_titles(word_path, headings)
+        titles = extract_titles(word_path_en, headings)
         pbar.update(10)
  
         pbar.set_description("Extrayendo textos de remediación")
-        remediation_texts = extract_text_sections(word_path, "Remediation:")
+        remediation_texts = extract_text_sections(word_path_en, "Remediation:")
         pbar.update(20)
  
         pbar.set_description("Extrayendo textos de verificación")
-        verification_texts = extract_text_sections(word_path, "Audit:")
+        verification_texts = extract_text_sections(word_path_en, "Audit:")
         pbar.update(20)
  
         pbar.set_description("Extrayendo textos de impacto")
-        impact_texts = extract_text_sections(word_path, "Description:")  # Cambiado a "Description:"
+        impact_texts = extract_text_sections(word_path_en, "Description:")  # Cambiado a "Description:"" o "Descripción:"
         pbar.update(20)
  
         pbar.set_description("Escribiendo datos en el archivo de Excel")
