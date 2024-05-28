@@ -3,7 +3,7 @@ from mtranslate import translate
 from tqdm import tqdm
 
 # Cargar el archivo de Excel
-archivo_excel = r'.\output.xlsx'
+archivo_excel = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output.xlsx'
 libro = openpyxl.load_workbook(archivo_excel)
 hoja = libro.active
 
@@ -27,9 +27,21 @@ for fila in range(2, hoja.max_row + 1):
         # Traducir el texto si no está vacío
         if texto_original:
             try:
-                texto_traducido = translate(texto_original, 'es')
-                # Escribir el texto traducido en la misma celda
-                celda.value = texto_traducido
+                # Separar el texto antes y después de "#!/usr/bin/env bash"
+                partes = texto_original.split("#!/usr/bin/env bash", 1)
+                texto_a_traducir = partes[0]
+                
+                # Traducir solo el texto antes de "#!/usr/bin/env bash"
+                texto_traducido = translate(texto_a_traducir, 'es')
+
+                # Recombinar el texto traducido con la parte que no debe ser traducida
+                if len(partes) > 1:
+                    texto_final = texto_traducido + '\n\n' + "#!/usr/bin/env bash" + partes[1]
+                else:
+                    texto_final = texto_traducido
+
+                # Escribir el texto final en la misma celda
+                celda.value = texto_final
             except Exception as e:
                 print(f"Error al traducir la fila {fila}, columna {columna}: {e}")
         
@@ -40,4 +52,4 @@ for fila in range(2, hoja.max_row + 1):
 barra_progreso.close()
 
 # Guardar los cambios en el archivo de Excel
-libro.save(r'.\output_es.xlsx')
+libro.save(r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output_es.xlsx')
