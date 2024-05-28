@@ -55,28 +55,48 @@ def extract_titles(doc_path, headings):
                 titles.append((domain, current_subdomain1, current_subdomain2, control_number, current_control, remediation, verification, impact))
  
     return titles
- 
+
+
 def extract_text_sections(doc_path, section_title):
     doc = Document(doc_path)
     texts = []
     section_text = ""
     in_section = False
     exclude_phrases = ["CIS Controls:", "MITRE ATT&CK Mappings:"]  # Lista de frases a excluir
- 
+    last_was_bullet = False
+
     for para in doc.paragraphs:
+        # Verificar si hemos encontrado un nuevo encabezado mientras estamos en una sección
         if para.style.name.startswith('Heading') and in_section and para.text not in exclude_phrases:
             texts.append(section_text.strip())
             in_section = False
             section_text = ""
+
+        # Verificar si el párrafo actual contiene el título de la sección
         if section_title in para.text:
             in_section = True
         elif in_section and not any(exclude in para.text for exclude in exclude_phrases):
-            section_text += para.text.strip() + "\n"
- 
+            # Verificar si el párrafo es un bullet
+            if para.style.name == 'List Paragraph':
+                lines = para.text.split(' If ')
+                for i, line in enumerate(lines):
+                    if i == 0:
+                        section_text += '- ' + line.strip() + "\n"
+                    else:
+                        section_text += "\nIf " + line.strip() + "\n"
+                last_was_bullet = True
+            else:
+                if last_was_bullet:
+                    section_text += para.text.strip() + "\n"
+                else:
+                    section_text += para.text.strip() + "\n"
+                last_was_bullet = False
+
     if in_section:
         texts.append(section_text.strip())
- 
+
     return texts
+
  
 def extract_numbered_headings(pdf_path):
     headings = {}
@@ -143,9 +163,9 @@ def merge_consecutive_rows(ws):
 
  
 def main():
-    word_path_en = r'.\Templates\CIS_Debian_Linux_11_STIG_Benchmark_v1.0.0.docx'
-    pdf_path = r'.\Templates\CIS_Debian_Linux_11_STIG_Benchmark_v1.0.0.pdf'
-    excel_path = r'.\output.xlsx'
+    word_path_en = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\Templates\CIS_Debian_Linux_10_Benchmark_v2.0.0.docx'
+    pdf_path = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\Templates\CIS_Debian_Linux_10_Benchmark_v2.0.0.pdf'
+    excel_path = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output.xlsx'
  
     # Barra de progreso principal para todo el proceso
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:
