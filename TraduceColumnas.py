@@ -3,12 +3,12 @@ from mtranslate import translate
 from tqdm import tqdm
 
 # Cargar el archivo de Excel
-archivo_excel = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output.xlsx'
+archivo_excel = r'D:\Usuarios\Ralfamole\Documentos\Cosas de Andres\VS\Autobastion\output.xlsx'
 libro = openpyxl.load_workbook(archivo_excel)
 hoja = libro.active
 
 # Especificar las columnas que deseas traducir (A, B, C, E, F, G y H)
-columnas_a_traducir = ['A', 'B', 'C', 'E', 'F', 'G', 'H']
+columnas_a_traducir = ['F', 'G', 'H']
 
 # Calcular el total de celdas a traducir
 total_celdas = (hoja.max_row - 1) * len(columnas_a_traducir)
@@ -52,4 +52,4 @@ for fila in range(2, hoja.max_row + 1):
 barra_progreso.close()
 
 # Guardar los cambios en el archivo de Excel
-libro.save(r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output_es.xlsx')
+libro.save(r'D:\Usuarios\Ralfamole\Documentos\Cosas de Andres\VS\Autobastion\output_es.xlsx')
