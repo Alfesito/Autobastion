@@ -21,21 +21,21 @@ def extract_titles(doc_path, headings):
             level = int(para.style.name.split(' ')[1])
             text = para.text.strip()
 
-            if level == 2:  # Dominio
+            if level == 3:  # Dominio
                 is_sub2 = False
                 domain = text
                 current_subdomain1 = None
                 current_subdomain2 = None
                 current_control = None
-            elif level == 4 and not is_sub2:  # Subdominio 1
+            elif level == 5 and not is_sub2:  # Subdominio 1
                 current_subdomain1 = text
                 current_subdomain2 = None
                 current_control = None
                 is_sub2 = True
-            elif level == 4 and is_sub2:  # Subdominio 2
+            elif level == 5 and is_sub2:  # Subdominio 2
                 current_subdomain2 = text
                 current_control = None
-            elif level == 3:  # Control
+            elif level == 4:  # Control
                 current_control = text.split(' (')[0]  # Elimina todo lo que hay a la derecha de un ' ('
                 # Extraer el número de control
                 for key, value in headings.items():
@@ -61,7 +61,8 @@ def extract_text_sections(doc_path, section_title):
     texts = []
     section_text = ""
     in_section = False
-    exclude_phrases = ["CIS Controls:", "MITRE ATT&CK Mappings:"]  # Lista de frases a excluir
+    exclude_phrases = ["CIS Controls:", "MITRE ATT&CK Mappings:", "References:"]  # Lista de frases a excluir
+    include_phrases = ["-OR-", "OR"] # Lista de frases a incluir
 
     def process_paragraph(para):
         nonlocal section_text
@@ -76,16 +77,16 @@ def extract_text_sections(doc_path, section_title):
             section_text += para.text.strip() + "\n"
 
     for para in doc.paragraphs:
-        if para.style.name.startswith('Heading') and in_section and para.text not in exclude_phrases and para.text != "-OR-":
+        if para.style.name.startswith('Heading') and in_section and (any(exclude in para.text for exclude in exclude_phrases) or not any(include in para.text for include in include_phrases)):
             texts.append(section_text.strip())
             in_section = False
             section_text = ""
         if section_title in para.text:
             in_section = True
         elif in_section and not any(exclude in para.text for exclude in exclude_phrases):
-            if para.text == "-OR-":
-                in_section = True
             process_paragraph(para)
+        else:
+            in_section = False
 
     if in_section:
         texts.append(section_text.strip())
@@ -178,9 +179,9 @@ def extract_text_from_docx(docx_path):
     return full_text
 
 def main():
-    word_path_en = r'D:\Usuarios\Ralfamole\Documentos\Cosas de Andres\VS\Autobastion\Templates\CIS_Debian_Linux_10_Benchmark_v2.0.0.docx'
-    pdf_path = r'D:\Usuarios\Ralfamole\Documentos\Cosas de Andres\VS\Autobastion\Templates\CIS_Debian_Linux_10_Benchmark_v2.0.0.pdf'
-    excel_path = r'D:\Usuarios\Ralfamole\Documentos\Cosas de Andres\VS\Autobastion\output.xlsx'
+    word_path_en = r''
+    pdf_path = r''
+    excel_path = r''
 
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:
         headings = extract_numbered_headings(pdf_path)
