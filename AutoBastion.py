@@ -61,9 +61,8 @@ def extract_text_sections(doc_path, section_title):
     texts = []
     section_text = ""
     in_section = False
-    exclude_phrases = ["CIS Controls:", "MITRE ATT&CK Mappings:", "References:", "Default Value:"]  # Lista de frases a excluir
-    include_phrases = ["-OR-", "OR", "-- OR --", "--OR--"] # Lista de frases a incluir
-
+    exclude_phrases = ["CIS Controls:", "MITRE ATT&CK Mappings:", "Audit:", "Remediation:", "References:", "Additional Information:"]  # Lista de frases a excluir
+    
     def process_paragraph(para):
         nonlocal section_text
         if para.style.name == 'List Paragraph':
@@ -77,33 +76,21 @@ def extract_text_sections(doc_path, section_title):
             section_text += para.text.strip() + "\n"
 
     for para in doc.paragraphs:
-        if section_title == "Description:":
-            if para.style.name.startswith('Heading') and in_section and (any(exclude in para.text for exclude in exclude_phrases) or not any(include in para.text for include in include_phrases)) and para.text == "Audit:":
-                texts.append(section_text.strip())
-                in_section = False
-                section_text = ""
-            if section_title in para.text:
-                in_section = True
-            elif in_section and not any(exclude in para.text for exclude in exclude_phrases):
-                if para.text != "Rationale:":
-                    process_paragraph(para)
-            else:
-                in_section = False
-        else:
-            if para.style.name.startswith('Heading') and in_section and (any(exclude in para.text for exclude in exclude_phrases) or not any(include in para.text for include in include_phrases)):
-                texts.append(section_text.strip())
-                in_section = False
-                section_text = ""
-            if section_title in para.text:
-                in_section = True
-            elif in_section and not any(exclude in para.text for exclude in exclude_phrases):
-                process_paragraph(para)
-            else:
-                in_section = False
-
+        if para.style.name.startswith('Heading') and para.text in exclude_phrases and in_section:
+            texts.append(section_text.strip())
+            in_section = False
+            section_text = ""
+        if para.style.name.startswith('Heading') and section_title == para.text:
+            in_section = True
+        elif in_section and not any(exclude in para.text for exclude in exclude_phrases):
+            process_paragraph(para)
+        elif exclude_phrases and in_section:
+            texts.append(section_text.strip())
+            in_section = False
+            section_text = ""
     if in_section:
         texts.append(section_text.strip())
-
+ 
     return texts
 
 def extract_numbered_headings(pdf_path):
@@ -128,13 +115,12 @@ def write_titles_to_excel(titles, remediation_texts, verification_texts, impact_
     wb = Workbook()
     ws = wb.active
     ws.title = "Controls"
-
     headers = ["Dominio", "Subdominio1", "Subdominio2", "ID", "Control", "Remediación", "Verificación", "Impacto"]
     ws.append(headers)
-
     extended_titles = []
+
     for i in range(len(titles)):
-        extended_title = list(titles[i])
+        extended_title = list(titles[i])  # Convertir la tupla a lista
         if i < len(remediation_texts):
             extended_title[5] = remediation_texts[i]
         if i < len(verification_texts):
@@ -145,15 +131,10 @@ def write_titles_to_excel(titles, remediation_texts, verification_texts, impact_
 
     for i, extended_title in enumerate(tqdm(extended_titles, desc="Copiando datos a Excel", unit="fila")):
         ws.append(extended_title)
-
+    
     merge_consecutive_rows(ws)
-    
-    # Agregar el texto extraído del documento en una nueva hoja
-    ws_text = wb.create_sheet("Extracted Text")
-    for index, text in enumerate(extracted_text, start=1):
-        ws_text.cell(row=index, column=1, value=text)
-    
     wb.save(excel_path)
+
 
 def merge_consecutive_rows(ws):
     max_row = ws.max_row
@@ -176,13 +157,6 @@ def extract_text_from_docx(docx_path):
     for para in doc.paragraphs:
         full_text.append(para.text)
 
-    for shape in doc.inline_shapes:
-        if shape._inline.graphic.graphicData.textbox:
-            textbox = shape._inline.graphic.graphicData.textbox
-            for paragraph in textbox.content.children:
-                if hasattr(paragraph, 'text'):
-                    full_text.append(paragraph.text)
-
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
@@ -198,6 +172,8 @@ def main():
 
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:
         headings = extract_numbered_headings(pdf_path)
+        for key, value in headings.items():
+            print(f'{key} : {value}')
         pbar.update(20)
         titles = extract_titles(word_path_en, headings)
         pbar.update(10)
