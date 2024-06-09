@@ -7,7 +7,7 @@ Herramienta para automatizar el copia y pega de los controles de las guias de ba
 - Instalar python y las siguientes librerias:
 
 ```shell
-pip install python-docx openpyxl tqdm PyPDF2 mtranslate
+pip install docx openpyxl tqdm PyPDF2 mtranslate
 ```
 - Descargar el pdf de la guia de bastionado del CIS y convertirlo a word con la herramienta: https://www.adobe.com/es/acrobat/online/pdf-to-word.html
 
