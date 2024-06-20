@@ -1,6 +1,7 @@
 import openpyxl
 from mtranslate import translate
 from tqdm import tqdm
+import re
 
 # Cargar el archivo de Excel
 archivo_excel = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output.xlsx'
@@ -8,7 +9,7 @@ libro = openpyxl.load_workbook(archivo_excel)
 hoja = libro.active
 
 # Especificar las columnas que deseas traducir (A, B, C, E, F, G y H)
-columnas_a_traducir = ['F', 'H', 'I']
+columnas_a_traducir = ['A', 'B', 'C', 'E', 'F', 'G', 'H', 'I']
 
 # Calcular el total de celdas a traducir
 total_celdas = (hoja.max_row - 1) * len(columnas_a_traducir)
@@ -28,6 +29,30 @@ def encontrar_cierre_llave(texto):
                 return i
     return -1
 
+# Función para excluir texto entre comillas simples y dobles y añadir espacios
+def excluir_comillas(texto):
+    patrones = re.findall(r"'[^']*'|\"[^\"]*\"", texto)
+    segmentos = re.split(r"('.*?'|\".*?\")", texto)
+    segmentos_con_espacios = []
+    for segmento in segmentos:
+        if segmento in patrones:
+            segmentos_con_espacios.append(' ' + segmento + ' ')
+        else:
+            segmentos_con_espacios.append(segmento)
+    return segmentos_con_espacios, patrones
+
+# Función para recombinar texto con exclusiones
+def recombinar_texto(segmentos, patrones, traducciones):
+    resultado = []
+    i = 0
+    for segmento in segmentos:
+        if segmento.strip() in patrones:
+            resultado.append(segmento)
+        else:
+            resultado.append(traducciones[i])
+            i += 1
+    return ''.join(resultado)
+
 # Iterar a través de las filas comenzando desde la fila 2
 for fila in range(2, hoja.max_row + 1):
     # Iterar sobre las columnas especificadas
@@ -43,19 +68,31 @@ for fila in range(2, hoja.max_row + 1):
                 partes = texto_original.split("#!/usr/bin/env bash", 1)
                 texto_a_traducir = partes[0]
                 
-                # Traducir solo el texto antes de "#!/usr/bin/env bash"
-                texto_traducido = translate(texto_a_traducir, 'es')
+                # Excluir texto entre comillas y añadir espacios
+                segmentos, patrones = excluir_comillas(texto_a_traducir)
+                
+                # Traducir solo los segmentos que no están entre comillas
+                traducciones = [translate(segmento, 'es') for segmento in segmentos if segmento.strip() not in patrones]
+                
+                # Recombinar el texto traducido con las exclusiones
+                texto_traducido = recombinar_texto(segmentos, patrones, traducciones)
                 
                 if len(partes) > 1:
                     # Encontrar el índice de cierre de la llave
                     indice_cierre = encontrar_cierre_llave(partes[1])
-                    if indice_cierre != -1:
+                    if (indice_cierre != -1):
                         # Dividir el texto después del bash script
                         script_no_traducir = partes[1][:indice_cierre + 1]
                         resto_traducir = partes[1][indice_cierre + 1:]
                         
-                        # Traducir el resto del texto
-                        resto_traducido = translate(resto_traducir, 'es')
+                        # Excluir texto entre comillas en el resto
+                        segmentos, patrones = excluir_comillas(resto_traducir)
+                        
+                        # Traducir solo los segmentos que no están entre comillas
+                        traducciones = [translate(segmento, 'es') for segmento in segmentos if segmento.strip() not in patrones]
+                        
+                        # Recombinar el resto del texto traducido
+                        resto_traducido = recombinar_texto(segmentos, patrones, traducciones)
                         
                         # Recombinar todo el texto
                         texto_final = texto_traducido + '\n\n' + "#!/usr/bin/env bash" + script_no_traducir + '\n\n' + resto_traducido
