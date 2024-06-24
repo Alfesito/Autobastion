@@ -9,7 +9,7 @@ from openpyxl.styles import PatternFill
 api_key = "AIzaSyBePg2sTA6ku0LTN_VV9SQhmiu2tcwe98k"
 
 # URL de la API
-url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
+url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
 
 # Cargar el archivo de Excel
 archivo_excel = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
@@ -39,7 +39,7 @@ def traducir_texto(texto_original):
                 "contents": [
                     {
                         "role": "user",
-                        "parts": [{"text": f"Quiero que la salida sea en texto plano(no quiero la salida como un .md),traduciendo al español el texto natural,elimina los saltos de linea si procede y cuando hay un Page y el numero(por ejemplo Page 45).No traduzcas los comandos,scripts rutas de directorios,en el caso de que sea un script pasalo por beautify.El texto es:{texto_original}"}]
+                        "parts": [{"text": f"Quiero que la salida sea en texto plano(no quiero la salida como un .md),traduciendo al español el texto natural,elimina los saltos de linea si procede y cuando hay un Page y el numero(por ejemplo 'Page 45').No traduzcas los comandos,scripts y rutas de directorios o archivos,en el caso de que sea un script pasalo por beautify.El texto es:{texto_original}"}]
                     }
                 ]
             }

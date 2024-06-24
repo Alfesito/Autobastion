@@ -64,7 +64,7 @@ def extract_text_sections_pdf(doc_path, section_title):
     texts = []
     section_text = ""
     in_section = False
-    exclude_phrases = ["CIS Controls:", "MITRE ATT&CK Mappings:", "References:", "Additional Information:", "Default Value:"]  # Lista de frases a excluir
+    exclude_phrases = ["CIS Controls:", "MITRE ATT&CK Mappings:", "Audit:", "Remediation:", "References:", "Additional Information:", "Default Value:"]  # Lista de frases a excluir
 
     reader = PyPDF2.PdfReader(doc_path)
     num_pages = len(reader.pages)
