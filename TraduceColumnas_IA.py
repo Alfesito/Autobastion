@@ -6,7 +6,7 @@ import time
 from openpyxl.styles import PatternFill
 
 # Tu clave de API
-api_key = "AIzaSyAkO8l32JaDyHcwxVSE7JutO5-NrYRTLCc"
+api_key = "AIzaSyBePg2sTA6ku0LTN_VV9SQhmiu2tcwe98k"
 
 # URL de la API
 url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
@@ -30,8 +30,8 @@ fill_yellow = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="s
 
 # Función para realizar la solicitud a la API con reintentos
 def traducir_texto(texto_original):
-    max_reintentos = 5
-    espera_inicial = 1  # 1 segundo
+    max_reintentos = 4
+    espera_inicial = 2  # 2 segundos
     for intento in range(max_reintentos):
         try:
             # Datos de la solicitud
@@ -39,7 +39,7 @@ def traducir_texto(texto_original):
                 "contents": [
                     {
                         "role": "user",
-                        "parts": [{"text": f"Quiero que la salida sea en texto plano (no quiero la salido como un .md), traduciendo al español el texto natural, elimina los saltos de linea si procede y cuando hay un Page y el numero (por ejemplo Page 45). No traduzcas los comandos, scripts rutas de directorios, en el caso de que sea un script pasalo por beautify: {texto_original}"}]
+                        "parts": [{"text": f"Quiero que la salida sea en texto plano(no quiero la salida como un .md),traduciendo al español el texto natural,elimina los saltos de linea si procede y cuando hay un Page y el numero(por ejemplo Page 45).No traduzcas los comandos,scripts rutas de directorios,en el caso de que sea un script pasalo por beautify.El texto es:{texto_original}"}]
                     }
                 ]
             }

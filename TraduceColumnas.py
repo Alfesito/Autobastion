@@ -4,7 +4,7 @@ from tqdm import tqdm
 import re
 
 # Cargar el archivo de Excel
-archivo_excel = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output.xlsx'
+archivo_excel = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
 libro = openpyxl.load_workbook(archivo_excel)
 hoja = libro.active
 
@@ -114,4 +114,4 @@ for fila in range(2, hoja.max_row + 1):
 barra_progreso.close()
 
 # Guardar los cambios en el archivo de Excel
-libro.save(r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output_es.xlsx')
+libro.save(r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output_es.xlsx')
