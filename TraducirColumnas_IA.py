@@ -87,9 +87,11 @@ for fila in range(2, hoja.max_row + 1):
                 if content:
                     celda.value = content
                 else:
+                    celda.value = texto_original
                     celda.fill = fill_yellow
             except Exception as e:
                 print(f"Error al traducir la fila {fila}, columna {columna}: {e}")
+                celda.value = texto_original
                 celda.fill = fill_yellow
         
         # Actualizar la barra de progreso
