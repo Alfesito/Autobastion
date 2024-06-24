@@ -11,7 +11,7 @@ def extract_controls(doc_path, headings):
         if para.style.name.startswith('Heading'):
             level = int(para.style.name.split(' ')[1])
             text = para.text.strip()
-            if level == 3:  # Control, cambien el numero según el heading <-------------
+            if level == 4:  # Control, cambien el numero según el heading <-------------
                 current_control = text.split(' (')[0]  # Elimina todo lo que hay a la derecha de un ' ('
                 # Extraer el número de control
                 for key, value in headings.items():
@@ -75,17 +75,18 @@ def extract_text_sections_pdf(doc_path, section_title):
 
         for line in text.splitlines():
             if in_section:
-                if any(line.startswith(heading) for heading in exclude_phrases):
+                if any(line.startswith(heading) for heading in exclude_phrases) or ('Page' in line and any(phrase in line for phrase in exclude_phrases)):
                     texts.append(section_text.strip())
                     in_section = False
                     section_text = ""
+                    break
                 else:
-                    section_text += line + "\n"
+                    section_text += line
             if section_title in line:
                 in_section = True
 
         # Al final de la página, si estamos en la sección, continuamos
-        if in_section and page_num == num_pages - 1:
+        if in_section and page_num == num_pages - 1 and page_num > 5: #Puede haber problemas si el la pagina 5 ya hay controles
             texts.append(section_text.strip())
 
     # Añadir el último texto de sección si quedó algo sin añadir
@@ -206,8 +207,8 @@ def merge_consecutive_rows(ws):
 
 
 def main():
-    word_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Microsoft_Windows_10_Enterprise_Benchmark_v3.0.0.docx'
-    pdf_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Microsoft_Windows_10_Enterprise_Benchmark_v3.0.0.pdf'
+    word_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Palo_Alto_Firewall_9_Benchmark_v1.0.1 (1).docx'
+    pdf_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Palo_Alto_Firewall_9_Benchmark_v1.0.1 (1).pdf'
     excel_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
 
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:

@@ -2,6 +2,7 @@ import openpyxl
 from mtranslate import translate
 from tqdm import tqdm
 import re
+from openpyxl.styles import PatternFill
 
 # Cargar el archivo de Excel
 archivo_excel = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
@@ -10,6 +11,9 @@ hoja = libro.active
 
 # Especificar las columnas que deseas traducir (A, B, C, E, F, G y H)
 columnas_a_traducir = ['I']
+
+# Definir el color amarillo para resaltar celdas
+fill_yellow = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 
 # Calcular el total de celdas a traducir
 total_celdas = (hoja.max_row - 1) * len(columnas_a_traducir)
@@ -105,6 +109,7 @@ for fila in range(2, hoja.max_row + 1):
                 # Escribir el texto final en la misma celda
                 celda.value = texto_final
             except Exception as e:
+                celda.fill = fill_yellow
                 print(f"Error al traducir la fila {fila}, columna {columna}: {e}")
         
         # Actualizar la barra de progreso
