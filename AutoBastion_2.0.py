@@ -206,8 +206,8 @@ def merge_consecutive_rows(ws):
 
 
 def main():
-    word_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Debian_Linux_10_Benchmark_v2.0.0.docx'
-    pdf_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Debian_Linux_10_Benchmark_v2.0.0.pdf'
+    word_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Microsoft_Windows_10_Enterprise_Benchmark_v3.0.0.docx'
+    pdf_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Microsoft_Windows_10_Enterprise_Benchmark_v3.0.0.pdf'
     excel_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
 
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:

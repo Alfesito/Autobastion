@@ -9,7 +9,7 @@ libro = openpyxl.load_workbook(archivo_excel)
 hoja = libro.active
 
 # Especificar las columnas que deseas traducir (A, B, C, E, F, G y H)
-columnas_a_traducir = ['A', 'B', 'C', 'E', 'F', 'G', 'H', 'I']
+columnas_a_traducir = ['I']
 
 # Calcular el total de celdas a traducir
 total_celdas = (hoja.max_row - 1) * len(columnas_a_traducir)

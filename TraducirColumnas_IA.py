@@ -16,7 +16,7 @@ archivo_excel = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Sc
 libro = openpyxl.load_workbook(archivo_excel)
 hoja = libro.active
 
-# Especificar las columnas que deseas traducir (A, B, C, E, F, G, H, I)
+# Especificar las columnas que deseas traducir (F, H)
 columnas_a_traducir = ['F']
 
 # Calcular el total de celdas a traducir
@@ -39,7 +39,7 @@ def traducir_texto(texto_original):
                 "contents": [
                     {
                         "role": "user",
-                        "parts": [{"text": f"Quiero que la salida sea en texto plano (no quiero que me la des como un .md), traduciendo al español el texto natural y elimina los saltos de linea si procede y que elimines cuando hay un Page y el numero. Pero no los comandos o scripts, estos quiero que me los pongas con sangrado si aplica en el caso: {texto_original}"}]
+                        "parts": [{"text": f"Quiero que la salida sea en texto plano (no quiero la salido como un .md), traduciendo al español el texto natural, elimina los saltos de linea si procede y cuando hay un Page y el numero (por ejemplo Page 45). No traduzcas los comandos, scripts rutas de directorios, en el caso de que sea un script pasalo por beautify: {texto_original}"}]
                     }
                 ]
             }
