@@ -2,8 +2,6 @@ from docx import Document
 from openpyxl import Workbook
 from tqdm import tqdm
 import PyPDF2
-import requests
-import json
 
 def extract_controls(doc_path, headings):
     doc = Document(doc_path)
@@ -13,7 +11,7 @@ def extract_controls(doc_path, headings):
         if para.style.name.startswith('Heading'):
             level = int(para.style.name.split(' ')[1])
             text = para.text.strip()
-            if level == 4:  # Control, cambien el numero según el heading
+            if level == 3:  # Control, cambien el numero según el heading <-------------
                 current_control = text.split(' (')[0]  # Elimina todo lo que hay a la derecha de un ' ('
                 # Extraer el número de control
                 for key, value in headings.items():
@@ -62,7 +60,7 @@ def extract_domains(headings, titles):
 
     return domains
 
-def extract_text_sections_pfd(doc_path, section_title):
+def extract_text_sections_pdf(doc_path, section_title):
     texts = []
     section_text = ""
     in_section = False
@@ -70,25 +68,29 @@ def extract_text_sections_pfd(doc_path, section_title):
 
     reader = PyPDF2.PdfReader(doc_path)
     num_pages = len(reader.pages)
-    
+
     for page_num in range(num_pages):
         page = reader.pages[page_num]
         text = page.extract_text()
 
         for line in text.splitlines():
-            if any(line.startswith(heading) for heading in exclude_phrases) and in_section:
-                texts.append(section_text.strip())
-                in_section = False
-                section_text = ""
+            if in_section:
+                if any(line.startswith(heading) for heading in exclude_phrases):
+                    texts.append(section_text.strip())
+                    in_section = False
+                    section_text = ""
+                else:
+                    section_text += line + "\n"
             if section_title in line:
                 in_section = True
-            elif in_section:
-                section_text += line + "\n"
 
-        if in_section and section_text:
+        # Al final de la página, si estamos en la sección, continuamos
+        if in_section and page_num == num_pages - 1:
             texts.append(section_text.strip())
-            section_text = ""
-            in_section = False
+
+    # Añadir el último texto de sección si quedó algo sin añadir
+    if section_text.strip():
+        texts.append(section_text.strip())
 
     return texts
 
@@ -204,9 +206,9 @@ def merge_consecutive_rows(ws):
 
 
 def main():
-    word_path = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\Templates\CIS_Debian_Linux_9_Benchmark_v1.0.1_ARCHIVE.docx'
-    pdf_path = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\Templates\CIS_Debian_Linux_9_Benchmark_v1.0.1_ARCHIVE.pdf'
-    excel_path = r'C:\Users\aalfarofernandez\OneDrive - Deloitte (O365D)\Documents\Scripts\AutoBast\output.xlsx'
+    word_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Debian_Linux_10_Benchmark_v2.0.0.docx'
+    pdf_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Debian_Linux_10_Benchmark_v2.0.0.pdf'
+    excel_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
 
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:
         headings = extract_numbered_headings(word_path)
@@ -217,7 +219,7 @@ def main():
         titles2 = extract_domains(headings, titles1)
 
         pbar.set_description("Extrayendo textos de remediación")
-        remediation_texts = extract_text_sections_pfd(pdf_path, "Remediation:")
+        remediation_texts = extract_text_sections_pdf(pdf_path, "Remediation:")
         pbar.update(20)
 
         pbar.set_description("Extrayendo textos de valor por defecto")
@@ -225,7 +227,7 @@ def main():
         pbar.update(10)
 
         pbar.set_description("Extrayendo textos de verificación")
-        verification_texts = extract_text_sections_pfd(pdf_path, "Audit:")
+        verification_texts = extract_text_sections_pdf(pdf_path, "Audit:")
         pbar.update(20)
 
         pbar.set_description("Extrayendo textos de impacto")
