@@ -68,7 +68,7 @@ def traducir_texto(texto_original):
             if response.status_code == 429:
                 print(f"Intento {intento + 1}/{max_reintentos} - Error 429: Too Many Requests. Esperando {espera_inicial} segundos antes de reintentar.")
                 time.sleep(espera_inicial)
-                espera_inicial *= 2  # Incrementar el tiempo de espera exponencialmente
+                espera_inicial *= 3  # Incrementar el tiempo de espera exponencialmente
             else:
                 raise e
 
@@ -89,7 +89,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 try:
     # Iterar a través de las filas comenzando desde la fila 2
-    for fila in range(2, hoja.max_row + 1):
+    for fila in range(17, hoja.max_row + 1):
         # Iterar sobre las columnas especificadas
         for columna in columnas_a_traducir:
             # Leer el valor de la celda en la columna actual
@@ -113,21 +113,7 @@ try:
             # Actualizar la barra de progreso
             barra_progreso.update(1)
             # Pausa breve para evitar problemas de tasa de solicitud
-            time.sleep(5)  # Ajusta el tiempo de espera según sea necesario
-
-    # Intentar traducir nuevamente las celdas en amarillo
-    for fila in range(2, hoja.max_row + 1):
-        for columna in columnas_a_traducir:
-            celda = hoja[columna + str(fila)]
-            if celda.fill == fill_yellow:
-                texto_original = celda.value
-                try:
-                    content = traducir_texto(texto_original)
-                    if content:
-                        celda.value = content
-                        celda.fill = None  # Eliminar el color de fondo
-                except Exception as e:
-                    print(f"Error al reintentar traducir la fila {fila}, columna {columna}: {e}")
+            time.sleep(0.2)  # Ajusta el tiempo de espera según sea necesario
 
 except KeyboardInterrupt:
     print("\nInterrupción detectada. Guardando el progreso...")
