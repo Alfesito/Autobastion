@@ -4,12 +4,14 @@ import requests
 import json
 import time
 from openpyxl.styles import PatternFill
+import signal
+import sys
 
 # Tu clave de API
-api_key = "AIzaSyBePg2sTA6ku0LTN_VV9SQhmiu2tcwe98k"
+api_key = ""
 
 # URL de la API -- tipos de modelos: https://ai.google.dev/gemini-api/docs/models/gemini?hl=es-419
-url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent?key={api_key}"
+url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={api_key}"
 
 # Cargar el archivo de Excel
 archivo_excel = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
@@ -72,35 +74,67 @@ def traducir_texto(texto_original):
 
     raise Exception(f"Error 429 persistente después de {max_reintentos} reintentos")
 
-# Iterar a través de las filas comenzando desde la fila 2
-for fila in range(2, hoja.max_row + 1):
-    # Iterar sobre las columnas especificadas
-    for columna in columnas_a_traducir:
-        # Leer el valor de la celda en la columna actual
-        celda = hoja[columna + str(fila)]
-        texto_original = celda.value
+def guardar_progreso():
+    # Guardar los cambios en el archivo de Excel
+    libro.save(r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output_es.xlsx')
+    print("Progreso guardado exitosamente.")
 
-        # Traducir el texto si no está vacío
-        if texto_original and texto_original != "-":
-            try:
-                content = traducir_texto(texto_original)
-                if content:
-                    celda.value = content
-                else:
+def signal_handler(sig, frame):
+    print("\nInterrupción detectada. Guardando el progreso...")
+    guardar_progreso()
+    sys.exit(0)
+
+# Asignar el manejador de señales para Ctrl+C
+signal.signal(signal.SIGINT, signal_handler)
+
+try:
+    # Iterar a través de las filas comenzando desde la fila 2
+    for fila in range(2, hoja.max_row + 1):
+        # Iterar sobre las columnas especificadas
+        for columna in columnas_a_traducir:
+            # Leer el valor de la celda en la columna actual
+            celda = hoja[columna + str(fila)]
+            texto_original = celda.value
+
+            # Traducir el texto si no está vacío
+            if texto_original and texto_original != "-":
+                try:
+                    content = traducir_texto(texto_original)
+                    if content:
+                        celda.value = content
+                    else:
+                        celda.value = texto_original
+                        celda.fill = fill_yellow
+                except Exception as e:
+                    print(f"Error al traducir la fila {fila}, columna {columna}: {e}")
                     celda.value = texto_original
                     celda.fill = fill_yellow
-            except Exception as e:
-                print(f"Error al traducir la fila {fila}, columna {columna}: {e}")
-                celda.value = texto_original
-                celda.fill = fill_yellow
-        
-        # Actualizar la barra de progreso
-        barra_progreso.update(1)
-        # Pausa breve para evitar problemas de tasa de solicitud
-        time.sleep(0.1)  # Ajusta el tiempo de espera según sea necesario
+            
+            # Actualizar la barra de progreso
+            barra_progreso.update(1)
+            # Pausa breve para evitar problemas de tasa de solicitud
+            time.sleep(5)  # Ajusta el tiempo de espera según sea necesario
 
-# Cerrar la barra de progreso
-barra_progreso.close()
+    # Intentar traducir nuevamente las celdas en amarillo
+    for fila in range(2, hoja.max_row + 1):
+        for columna in columnas_a_traducir:
+            celda = hoja[columna + str(fila)]
+            if celda.fill == fill_yellow:
+                texto_original = celda.value
+                try:
+                    content = traducir_texto(texto_original)
+                    if content:
+                        celda.value = content
+                        celda.fill = None  # Eliminar el color de fondo
+                except Exception as e:
+                    print(f"Error al reintentar traducir la fila {fila}, columna {columna}: {e}")
 
-# Guardar los cambios en el archivo de Excel
-libro.save(r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output_es.xlsx')
+except KeyboardInterrupt:
+    print("\nInterrupción detectada. Guardando el progreso...")
+    guardar_progreso()
+    sys.exit(0)
+finally:
+    # Cerrar la barra de progreso
+    barra_progreso.close()
+    # Guardar progreso al finalizar
+    guardar_progreso()

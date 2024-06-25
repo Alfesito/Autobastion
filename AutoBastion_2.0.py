@@ -60,7 +60,7 @@ def extract_domains(headings, titles):
 
     return domains
 
-def extract_text_sections_pdf(doc_path, section_title):
+def extract_text_sections_pdf(doc_path, section_title): #  73 | P a g e
     texts = []
     section_text = ""
     in_section = False
