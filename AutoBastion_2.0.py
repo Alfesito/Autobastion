@@ -2,8 +2,10 @@ from docx import Document
 from openpyxl import Workbook
 from tqdm import tqdm
 import PyPDF2
+import argparse
 
-def extract_controls(doc_path, headings):
+# Función para extraer los controles de un documento Word
+def extract_controls(doc_path, headings, heading_level):
     doc = Document(doc_path)
     titles = []
 
@@ -11,12 +13,12 @@ def extract_controls(doc_path, headings):
         if para.style.name.startswith('Heading'):
             level = int(para.style.name.split(' ')[1])
             text = para.text.strip()
-            if level == 4:  # Control, cambien el numero según el heading <-------------
-                current_control = text.split(' (')[0]  # Elimina todo lo que hay a la derecha de un ' ('
+            if level == heading_level:  # Ajustar el número según el nivel de encabezado requerido
+                current_control = text
                 # Extraer el número de control
                 for key, value in headings.items():
                     value_words = str(value)
-                    control_words = str(current_control)
+                    control_words = str(text.split(' (')[0])
                     if value_words == control_words:
                         control_number = key
                         break  # Salir del bucle una vez que se encuentra una coincidencia
@@ -32,6 +34,7 @@ def extract_controls(doc_path, headings):
 
     return titles
 
+# Función para extraer los dominios de los controles
 def extract_domains(headings, titles):
     domains = []
     for title in titles:
@@ -60,7 +63,8 @@ def extract_domains(headings, titles):
 
     return domains
 
-def extract_text_sections_pdf(doc_path, section_title): #  73 | P a g e
+# Función para extraer secciones de texto de un PDF
+def extract_text_sections_pdf(doc_path, section_title):
     texts = []
     section_text = ""
     in_section = False
@@ -86,7 +90,7 @@ def extract_text_sections_pdf(doc_path, section_title): #  73 | P a g e
                 in_section = True
 
         # Al final de la página, si estamos en la sección, continuamos
-        if in_section and page_num == num_pages - 1 and page_num > 5: #Puede haber problemas si el la pagina 5 ya hay controles
+        if in_section and page_num == num_pages - 1 and page_num > 5:  # Puede haber problemas si en la página 5 ya hay controles
             texts.append(section_text.strip())
 
     # Añadir el último texto de sección si quedó algo sin añadir
@@ -95,6 +99,7 @@ def extract_text_sections_pdf(doc_path, section_title): #  73 | P a g e
 
     return texts
 
+# Función para extraer secciones de texto de un documento Word
 def extract_text_sections_word(doc_path, section_title):
     doc = Document(doc_path)
     texts = []
@@ -148,7 +153,7 @@ def extract_text_sections_word(doc_path, section_title):
  
     return texts
 
-
+# Función para extraer encabezados numerados de un documento Word
 def extract_numbered_headings(word_path):
     headings = {}
     doc = Document(word_path)
@@ -164,6 +169,7 @@ def extract_numbered_headings(word_path):
         
     return headings
 
+# Función para escribir los títulos en un archivo Excel
 def write_titles_to_excel(titles, remediation_texts, default_value_texts, verification_texts, impact_texts, excel_path):
     wb = Workbook()
     ws = wb.active
@@ -190,10 +196,10 @@ def write_titles_to_excel(titles, remediation_texts, default_value_texts, verifi
     merge_consecutive_rows(ws)
     wb.save(excel_path)
 
-
+# Función para combinar filas consecutivas en un archivo Excel
 def merge_consecutive_rows(ws):
     max_row = ws.max_row
-    for col in [1,2,3]:
+    for col in [1, 2, 3]:
         start_row = 2
         while start_row <= max_row:
             end_row = start_row
@@ -205,41 +211,46 @@ def merge_consecutive_rows(ws):
                 cell.alignment = cell.alignment.copy(vertical='center')
             start_row = end_row + 1
 
-
+# Función principal para ejecutar el script
 def main():
-    word_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Palo_Alto_Firewall_9_Benchmark_v1.0.1 (1).docx'
-    pdf_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/Templates/CIS_Palo_Alto_Firewall_9_Benchmark_v1.0.1 (1).pdf'
-    excel_path = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
+    parser = argparse.ArgumentParser(description="Autobastion Script")
+    parser.add_argument('--word_path', type=str, required=True, help='Ruta del archivo Word de entrada')
+    parser.add_argument('--pdf_path', type=str, required=True, help='Ruta del archivo PDF de entrada')
+    parser.add_argument('--excel_path', type=str, required=True, help='Ruta del archivo Excel de salida')
+    parser.add_argument('--heading_level', type=int, default=3, help='Nivel de encabezado para extraer controles')
+
+    args = parser.parse_args()
 
     with tqdm(total=100, desc="Procesando documento de Word a Excel", unit="porcentaje") as pbar:
-        headings = extract_numbered_headings(word_path)
+        headings = extract_numbered_headings(args.word_path)
         pbar.update(20)
-        titles1 = extract_controls(word_path, headings)
+        titles1 = extract_controls(args.word_path, headings, args.heading_level)
         pbar.update(10)
 
         titles2 = extract_domains(headings, titles1)
 
         pbar.set_description("Extrayendo textos de remediación")
-        remediation_texts = extract_text_sections_pdf(pdf_path, "Remediation:")
+        remediation_texts = extract_text_sections_pdf(args.pdf_path, "Remediation:")
         pbar.update(20)
 
         pbar.set_description("Extrayendo textos de valor por defecto")
-        default_value_texts = extract_text_sections_word(word_path, "Default Value:")
+        default_value_texts = extract_text_sections_word(args.word_path, "Default Value:")
         pbar.update(10)
 
         pbar.set_description("Extrayendo textos de verificación")
-        verification_texts = extract_text_sections_pdf(pdf_path, "Audit:")
+        verification_texts = extract_text_sections_pdf(args.pdf_path, "Audit:")
         pbar.update(20)
 
         pbar.set_description("Extrayendo textos de impacto")
-        impact_texts = extract_text_sections_word(word_path, "Description:")
+        impact_texts = extract_text_sections_word(args.word_path, "Description:")
         pbar.update(15)
 
         pbar.set_description("Escribiendo datos en el archivo de Excel")
-        write_titles_to_excel(titles2, remediation_texts, default_value_texts, verification_texts, impact_texts, excel_path)
+        write_titles_to_excel(titles2, remediation_texts, default_value_texts, verification_texts, impact_texts, args.excel_path)
         pbar.update(5)
 
-    print(f"Datos copiados y pegados en {excel_path}")
+    print(f"Datos copiados y pegados en {args.excel_path}")
 
+# Ejecutar la función principal si este archivo se ejecuta como script
 if __name__ == "__main__":
     main()

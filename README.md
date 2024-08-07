@@ -1,30 +1,57 @@
 # Autobastion
 
-Herramienta para automatizar el copia y pega de los controles de las guias de bastionado del CIS de un pdf y word a excel.
+Herramienta para automatizar el proceso de copia y pega de los controles de las guías de bastionado del CIS desde documentos PDF y Word a un archivo Excel. El uso de PDF y Word es debido a que cada uno de estos archivos permite optener el texto con los comandos, de otra forma la copia de los comandos sería más dificil.
 
 ## Requirements
 
-- Instalar python y las siguientes librerias:
+- Instalar Python y las siguientes librerias:
 
 ```shell
-pip install docx openpyxl tqdm PyPDF2 mtranslate
+pip install python-docx openpyxl tqdm PyPDF2 mtranslate
 ```
-- Descargar el pdf de la guia de bastionado del CIS y convertirlo a word con la herramienta: https://www.adobe.com/es/acrobat/online/pdf-to-word.html
+- Descargar el PDF de la guía de bastionado del CIS y convertirlo a Word utilizando la herramienta: https://www.adobe.com/es/acrobat/online/pdf-to-word.html
 
-- Dentro de la función main, hay que indicar las rutas absolutas para el input (word y pdf), como del output (excel).
+- Dentro de la función main, se deben especificar las rutas absolutas de los archivos de entrada (Word y PDF) y del archivo de salida (Excel).
 
 ## Pasos a segurir
 
-1. Ejecutamos el comnado para sacar la información del word y el pdf. Es necesario poner la ruta de estos archivos. Adicionalmente, una vez generado el word, hay que ver como se organizan los headings, porque puede variar según el documento.
+1. Ejecutar el comando para extraer la información del Word y el PDF. Es necesario especificar las rutas de estos archivos. Adicionalmente, una vez generado el documento Word, es importante revisar cómo se organizan los encabezados, ya que pueden variar según el documento.
 
 ```shell
-python AutoBastion.py
+python AutoBastion.py --word_path "ruta/del/archivo.docx" --pdf_path "ruta/del/archivo.pdf" --excel_path "ruta/del/salida.xlsx" --heading_level 3
 ```
-Una vez generado el nuevo documento excel la columna 2 (subdominio no suele ser precisa), por lo que se recomienda hacerla a mano.
+**--word_path**:
+    Descripción: Especifica la ruta del archivo Word de entrada.
+    Tipo: Cadena de texto (str).
+    Requerido: Sí.
+    Ejemplo: --word_path "C:/Documentos/CIS_Guia.docx"
+**--pdf_path**:
+    Descripción: Especifica la ruta del archivo PDF de entrada.
+    Tipo: Cadena de texto (str).
+    Requerido: Sí.
+    Ejemplo: --pdf_path "C:/Documentos/Guia.pdf"
+**--excel_path**:
+    Descripción: Especifica la ruta del archivo Excel de salida.
+    Tipo: Cadena de texto (str).
+    Requerido: Sí.
+    Ejemplo: --excel_path "C:/Documentos/Output.xlsx"
+**--heading_level**:
+    Descripción: Define el nivel de encabezado que se utilizará para extraer los controles del documento Word. Los niveles de encabezado en Word se utilizan para organizar el documento en jerarquías, donde 1 es el nivel más alto (encabezado principal), 2 es un subencabezado de nivel 1, 3 es un subencabezado de nivel 2, y así sucesivamente. El uso del encabezado debe de ser único en todo el documento, de otra forma puede haber problemas a la hora de seleccionar los controles.
+    Tipo: Entero (int).
+    Requerido: No (tiene un valor predeterminado).
+    Valor Predeterminado: 3
+    Ejemplo: --heading_level 3
 
-2. Después es posible traducir las columnas con el siguiente comando:
+2. Después, se puede traducir el contenido de las columnas con el siguiente comando:
 
 ```shell
 python TraduceColumnas.py
 ```
-**¡¡IMPORTANTE!!** Se recomienda ver todas las filas y columnas para encontrar fallos, esta herramienta facilita a la hora de copiar y pegar contoles, además de traducir. Sin embargo, hay ocasiones en las que no identifica bien algunos campos por temas de formato.
+
+¡Cuidado! También se traducirán los comandos. No se recomienda en general su uso.
+
+## A tener en cuenta
+
+- Se recomienda el filtrado de ciertas palabras clave como: **CIS** y **P a g e**. Para cambiarlas o eliminarlas.
+
+- **¡¡IMPORTANTE!!** Es obligatorio revisar todas las filas y columnas para detectar posibles errores. Esta herramienta facilita el proceso de copia y pega de los controles, además de la traducción. Sin embargo, puede haber ocasiones en las que no identifique correctamente algunos campos debido a problemas de formato.

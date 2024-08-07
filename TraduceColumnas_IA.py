@@ -8,31 +8,29 @@ import signal
 import sys
 
 # Tu clave de API
-api_key = ""
+api_key = "AIzaSyDLVLq2bmr30m6JNYKaCtZ9zNeaf6izrA4"
 
 # URL de la API -- tipos de modelos: https://ai.google.dev/gemini-api/docs/models/gemini?hl=es-419
 url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={api_key}"
 
 # Cargar el archivo de Excel
-archivo_excel = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/output.xlsx'
+archivo_excel = r'/Users/andresalfarofernandez/DocumentosPC/VisualStudio_code/Scripts/Autobastion/bast PA.xlsx'
 libro = openpyxl.load_workbook(archivo_excel)
 hoja = libro.active
 
 # Especificar las columnas que deseas traducir (F, H)
-columnas_a_traducir = ['F']
+columnas_a_traducir = ['L', 'I']
 
 # Calcular el total de celdas a traducir
 total_celdas = (hoja.max_row - 1) * len(columnas_a_traducir)
-
 # Configurar la barra de progreso
 barra_progreso = tqdm(total=total_celdas, desc="Progreso")
-
 # Definir el color amarillo para resaltar celdas
 fill_yellow = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 
 # Función para realizar la solicitud a la API con reintentos
 def traducir_texto(texto_original):
-    max_reintentos = 4
+    max_reintentos = 5
     espera_inicial = 3  # 3 segundos
     for intento in range(max_reintentos):
         try:
@@ -41,7 +39,7 @@ def traducir_texto(texto_original):
                 "contents": [
                     {
                         "role": "user",
-                        "parts": [{"text": f"Quiero que la salida sea en texto plano(no quiero la salida como un .md),traduciendo al español el texto natural,elimina los saltos de linea si procede y cuando hay un Page y el numero.No traduzcas los comandos,scripts y rutas de directorios o archivos(como 'Device > Setup > Interfaces > Management'),en el caso de que sea un script pasalo por beautify.El texto es:{texto_original}"}]
+                        "parts": [{"text": f"Quiero que la salida sea en texto plano(no quiero la salida como un .md),traduciendo al ingles el texto natural.No traduzcas los comandos,scripts,palabras en mayuscula sin punto antes,rutas de directorios o archivos(como 'Computer Configuration\Policies\Windows Settings\Security Settings\Account Policies\Password Policy\Enforce password history'),en el caso de que sea un script pasalo por beautify.El texto es:{texto_original}"}]
                     }
                 ]
             }
@@ -88,8 +86,8 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 try:
-    # Iterar a través de las filas comenzando desde la fila 2
-    for fila in range(17, hoja.max_row + 1):
+    # Iterar a través de las filas comenzando desde la fila 2 <----------
+    for fila in range(4, hoja.max_row + 1):
         # Iterar sobre las columnas especificadas
         for columna in columnas_a_traducir:
             # Leer el valor de la celda en la columna actual
